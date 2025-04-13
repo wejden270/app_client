@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' as foundation;
 
 class ApiService {
   // ✅ Utilise l'adresse IP locale correcte de ton PC (visible dans ipconfig/ifconfig)
-  final String baseUrl = 'http://192.168.1.110:8000/api';
+  final String baseUrl = 'http://localhost:8000/api';
 
   // 🔍 Récupère les chauffeurs proches
   Future<List<Chauffeur>> getChauffeursProches(double latitude, double longitude) async {

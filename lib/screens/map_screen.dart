@@ -54,7 +54,8 @@ class _MapScreenState extends State<MapScreen> {
             chauffeur['latitude'],
             chauffeur['longitude'],
           );
-          return distance <= 50000; // 50 km
+          //return distance <= 50000; // 50 km
+          return true;
         }).toList();
 
         setState(() {

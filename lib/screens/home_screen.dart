@@ -58,12 +58,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchNearbyDrivers() async {
-    final url = Uri.parse('https://ton-domaine.com/api/drivers/nearby');
-    final response = await http.get(url);
+    final x = await Geolocator.getCurrentPosition();
 
-    if (response.statusCode == 200) {
+    final url = Uri.parse('http://localhost:8000/api/w/nearby?latitude='+x.latitude.toString()+'&longitude='+x.latitude.toString());
+    final response = await http.get(url, headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    });
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
       try {
-        final List<dynamic> driverData = json.decode(response.body);
+        final body = json.decode(response.body);
+        final List<dynamic> driverData = body['data'];
         setState(() {
           drivers = driverData.where((driver) {
             double distance = Geolocator.distanceBetween(
@@ -75,7 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
             return distance <= 50;
           }).toList();
         });
-      } catch (e) {}
+      } catch (e) {
+        print(e);
+      }
     }
   }
 

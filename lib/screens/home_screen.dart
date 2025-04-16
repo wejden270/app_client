@@ -53,14 +53,14 @@ class _HomeScreenState extends State<HomeScreen> {
         return Future.error('Permission refusée définitivement.');
       }
     }
-    
+
     return await Geolocator.getCurrentPosition();
   }
 
   Future<void> _fetchNearbyDrivers() async {
     final x = await Geolocator.getCurrentPosition();
+    final url = Uri.parse('http://localhost:8000/api/w/nearby?latitude=${x.latitude}&longitude=${x.longitude}');
 
-    final url = Uri.parse('http://localhost:8000/api/w/nearby?latitude='+x.latitude.toString()+'&longitude='+x.latitude.toString());
     final response = await http.get(url, headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -69,18 +69,26 @@ class _HomeScreenState extends State<HomeScreen> {
     if (response.statusCode == 200 || response.statusCode == 204) {
       try {
         final body = json.decode(response.body);
+        // 🔹 Ajoute cette ligne pour voir la réponse brute de l'API
+        print("Réponse du backend : $body");
         final List<dynamic> driverData = body['data'];
+
         setState(() {
-          drivers = driverData.where((driver) {
-            double distance = Geolocator.distanceBetween(
-              latitude!,
-              longitude!,
-              driver['latitude'],
-              driver['longitude'],
-            ) / 1000;
-            return distance <= 50;
+          drivers = driverData.where((driver) =>
+          driver["latitude"] != null && driver["longitude"] != null
+          ).map((driver) {
+            return {
+              "id": driver["id"],
+              "name": driver["name"],
+              "email": driver["email"],
+              "latitude": double.tryParse(driver["latitude"].toString()) ?? 0.0,
+              "longitude": double.tryParse(driver["longitude"].toString()) ?? 0.0,
+            };
           }).toList();
         });
+
+
+
       } catch (e) {
         print(e);
       }

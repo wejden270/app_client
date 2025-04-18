@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "531843061403",
+    "project_id": "projet-ec820",
+    "storage_bucket": "projet-ec820.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:531843061403:android:bb6df8ff848d6b24a3d83e",
+        "android_client_info": {
+          "package_name": "com.example.chauffeurs_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpWPCov-SPWzMbojgPbh5dGojMvxjyPoU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

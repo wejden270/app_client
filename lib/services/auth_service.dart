@@ -5,32 +5,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 
 // Import conditionnel pour gérer dart:io (incompatible avec le Web)
-import 'platform_stub.dart'
-if (dart.library.io) 'platform_io.dart';
+/*import 'platform_stub.dart'
+if (dart.library.io) 'platform_io.dart';*/
 
 class AuthService {
   /// 🔥 Retourne l'URL de l'API selon la plateforme
-  String getApiUrl() {
-    if (kIsWeb) {
-      return "http://192.168.1.110:8000/api/auth"; // Adresse pour tests Web
-    }
-
-    if (kDebugMode) {
-      if (MyPlatform.isAndroid) {
-        return "http://10.0.2.2:8000/api/auth"; // Android Emulator
-      } else {
-        return "http://192.168.1.110:8000/api/auth"; // iOS/physique
-      }
-    } else {
-      return "https://mon-api.com/api/auth"; // Production
-    }
-  }
+String getApiUrl() {
+  return "http://192.168.1.110:8000/api/auth"; // IP de ton PC pour téléphones réels
+}
 
   /// 🚀 Inscription
   Future<User?> registerUser(String name, String email, String password) async {
     try {
       final String apiUrl = getApiUrl();
       final uri = Uri.parse('$apiUrl/register');
+
+      debugPrint("🔗 URL appelée : $uri");
+      debugPrint("📤 Données envoyées : name=$name, email=$email, password=$password");
 
       final response = await http.post(
         uri,
@@ -45,6 +36,9 @@ class AuthService {
           'password_confirmation': password,
         }),
       );
+
+      debugPrint("📡 Status Code : ${response.statusCode}");
+      debugPrint("📡 Response Body : ${response.body}");
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
@@ -84,6 +78,9 @@ class AuthService {
       final String apiUrl = getApiUrl();
       final uri = Uri.parse('$apiUrl/login');
 
+      debugPrint("🔗 URL appelée : $uri");
+      debugPrint("📤 Données envoyées : email=$email, password=$password");
+
       final response = await http.post(
         uri,
         headers: {
@@ -95,6 +92,9 @@ class AuthService {
           'password': password,
         }),
       );
+
+      debugPrint("📡 Status Code : ${response.statusCode}");
+      debugPrint("📡 Response Body : ${response.body}");
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -165,5 +165,41 @@ class AuthService {
     await prefs.remove('user_id');
     await prefs.remove('user_name');
     await prefs.remove('user_email');
+  }
+
+  /// 🚚 Récupérer la liste des chauffeurs
+  Future<List<dynamic>> getDrivers() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      if (token == null) {
+        debugPrint("⚠ Pas de token d'authentification");
+        return [];
+      }
+
+      final response = await http.get(
+        Uri.parse('${getApiUrl()}/drivers'),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      debugPrint("📡 Status Code : ${response.statusCode}");
+      debugPrint("📡 Response Body : ${response.body}");
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['drivers'] ?? [];
+      } else {
+        debugPrint("⚠ Échec de récupération des chauffeurs : ${response.body}");
+        return [];
+      }
+    } catch (e) {
+      debugPrint("❌ Erreur lors de la récupération des chauffeurs : $e");
+      return [];
+    }
   }
 }

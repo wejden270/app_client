@@ -33,6 +33,38 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <!-- Firebase Messaging -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6NeuqUhRusaCvXlSZAATHefGK7DzLSZw",
+      authDomain: "projet-ec820.firebaseapp.com",
+      projectId: "projet-ec820",
+      storageBucket: "projet-ec820.firebasestorage.app",
+      messagingSenderId: "531843061403",
+      appId: "1:531843061403:web:6429872d7c13675fa3d83e",
+      measurementId: "G-335D6QBGYD"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    // Initialize Firebase Cloud Messaging and get token
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('firebase-messaging-sw.js')
+        .then(function(registration) {
+          console.log('Service Worker registered');
+        })
+        .catch(function(err) {
+          console.log('Service Worker registration failed: ', err);
+        });
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

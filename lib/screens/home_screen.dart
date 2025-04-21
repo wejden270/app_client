@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchNearbyDrivers() async {
     final x = await Geolocator.getCurrentPosition();
-    final url = Uri.parse('http://localhost:8000/api/w/nearby?latitude=${x.latitude}&longitude=${x.longitude}');
+    final url = Uri.parse('http://192.168.1.110:8000/api/w/nearby?latitude=${x.latitude}&longitude=${x.longitude}');
 
     final response = await http.get(url, headers: {
       'Accept': 'application/json',

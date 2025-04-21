@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:clients_app/helpers/auth_service.dart';
+import 'package:clients_app/services/auth_service.dart'; // ✅ bon
 import 'signup_screen.dart';
 import 'home_screen.dart';
 

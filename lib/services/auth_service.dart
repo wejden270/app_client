@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user_model.dart';
 
 // Import conditionnel pour gérer dart:io (incompatible avec le Web)
 /*import 'platform_stub.dart'
@@ -15,7 +14,7 @@ String getApiUrl() {
 }
 
   /// 🚀 Inscription
-  Future<User?> registerUser(String name, String email, String password) async {
+  Future<Map<String, dynamic>?> registerUser(String name, String email, String password) async {
     try {
       final String apiUrl = getApiUrl();
       final uri = Uri.parse('$apiUrl/register');
@@ -42,26 +41,7 @@ String getApiUrl() {
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-
-        if (data is Map<String, dynamic> &&
-            data.containsKey('token') &&
-            data.containsKey('user')) {
-          final userData = data['user'];
-
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', data['token']);
-          await prefs.setInt('user_id', userData['id']);
-          await prefs.setString('user_name', userData['name']);
-          await prefs.setString('user_email', userData['email']);
-
-          return User(
-            id: userData['id'],
-            name: userData['name'],
-            email: userData['email'],
-            password: "",
-          );
-        }
-        return null;
+        return data;
       } else {
         debugPrint("⚠ Échec inscription : ${response.body}");
         return null;
@@ -73,7 +53,7 @@ String getApiUrl() {
   }
 
   /// 🚀 Connexion
-  Future<User?> loginUser(String email, String password) async {
+  Future<Map<String, dynamic>?> loginUser(String email, String password) async {
     try {
       final String apiUrl = getApiUrl();
       final uri = Uri.parse('$apiUrl/login');
@@ -98,26 +78,7 @@ String getApiUrl() {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-
-        if (data is Map<String, dynamic> &&
-            data.containsKey('token') &&
-            data.containsKey('user')) {
-          final userData = data['user'];
-
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', data['token']);
-          await prefs.setInt('user_id', userData['id']);
-          await prefs.setString('user_name', userData['name']);
-          await prefs.setString('user_email', userData['email']);
-
-          return User(
-            id: userData['id'],
-            name: userData['name'],
-            email: userData['email'],
-            password: "",
-          );
-        }
-        return null;
+        return data;
       } else {
         debugPrint("⚠ Échec de la connexion : ${response.body}");
         return null;
@@ -136,7 +97,7 @@ String getApiUrl() {
   }
 
   /// 🚀 Récupérer l'utilisateur connecté
-  Future<User?> getCurrentUser() async {
+  Future<Map<String, dynamic>?> getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
@@ -146,12 +107,11 @@ String getApiUrl() {
       final userEmail = prefs.getString('user_email');
 
       if (userId != null && userName != null && userEmail != null) {
-        return User(
-          id: userId,
-          name: userName,
-          email: userEmail,
-          password: "",
-        );
+        return {
+          'id': userId,
+          'name': userName,
+          'email': userEmail,
+        };
       }
     }
 

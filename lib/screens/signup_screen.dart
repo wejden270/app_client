@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../models/user_model.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -35,13 +34,13 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      User? user = await AuthService().registerUser(
+      Map<String, dynamic>? result = await AuthService().registerUser(
         nameController.text.trim(),
         emailController.text.trim(),
         passwordController.text,
       );
 
-      if (user != null) {
+      if (result != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Inscription réussie ! Connectez-vous.")),

@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'chauffeur_detail_screen.dart'; // Import du nouvel écran
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _getCurrentLocation() async {
     try {
       Position position = await _determinePosition();
-      print("position ===== $position");
       setState(() {
         latitude = position.latitude;
         longitude = position.longitude;
@@ -36,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       _fetchNearbyDrivers();
     } catch (error) {
+      print("Erreur de localisation: $error");
       setState(() => isLoading = false);
     }
   }
@@ -43,15 +44,19 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<Position> _determinePosition() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error('Le service de géolocalisation est désactivé.');
+      throw Exception('Le service de géolocalisation est désactivé.');
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.deniedForever) {
-        return Future.error('Permission refusée définitivement.');
+      if (permission == LocationPermission.denied) {
+        throw Exception('La permission de localisation a été refusée');
       }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('Les permissions sont définitivement refusées.');
     }
 
     return await Geolocator.getCurrentPosition();
@@ -69,28 +74,25 @@ class _HomeScreenState extends State<HomeScreen> {
     if (response.statusCode == 200 || response.statusCode == 204) {
       try {
         final body = json.decode(response.body);
-        // 🔹 Ajoute cette ligne pour voir la réponse brute de l'API
         print("Réponse du backend : $body");
         final List<dynamic> driverData = body['data'];
 
         setState(() {
           drivers = driverData.where((driver) =>
-          driver["latitude"] != null && driver["longitude"] != null
+            driver["latitude"] != null && driver["longitude"] != null
           ).map((driver) {
             return {
               "id": driver["id"],
               "name": driver["name"],
               "email": driver["email"],
+              "phone": driver["phone"], // Ajout du champ téléphone
               "latitude": double.tryParse(driver["latitude"].toString()) ?? 0.0,
               "longitude": double.tryParse(driver["longitude"].toString()) ?? 0.0,
             };
           }).toList();
         });
-
-
-
       } catch (e) {
-        print(e);
+        print("Erreur de parsing: $e");
       }
     }
   }
@@ -215,7 +217,36 @@ class MapScreen extends StatelessWidget {
               itemCount: drivers.length,
               itemBuilder: (context, index) {
                 final driver = drivers[index];
-                return Card(
+
+                return GestureDetector(
+                  onTap: () {
+                    // debugPrint('🚗 GestureDetector - Tap sur chauffeur: ${chauffeur['name']}');
+                    // debugPrint('📍 Coordonnées: ${chauffeur['latitude']}, ${chauffeur['longitude']}');
+
+                    try {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChauffeurDetailScreen(
+                            chauffeurId: int.parse(driver['id'].toString()),
+                            chauffeurNom: driver['name'] ?? 'Sans nom',
+                            chauffeurLat: double.parse(driver['latitude'].toString()),
+                            chauffeurLng: double.parse(driver['longitude'].toString()),
+                            clientLat: latitude,
+                            clientLng: longitude,
+                          ),
+                        ),
+                      ).then((_) {
+                        debugPrint('⬅️ Retour de ChauffeurDetailScreen');
+                      });
+                    } catch (e) {
+                      debugPrint('❌ Erreur navigation: $e');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Erreur lors de la navigation : $e")),
+                      );
+                    }
+                  },
+                  child: Card(
                   margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                   child: ListTile(
                     leading: const Icon(Icons.directions_car, color: Colors.red),
@@ -224,7 +255,7 @@ class MapScreen extends StatelessWidget {
                       "Latitude: ${driver['latitude']}, Longitude: ${driver['longitude']}",
                     ),
                   ),
-                );
+                ));
               },
             ),
           ),

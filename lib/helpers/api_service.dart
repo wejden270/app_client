@@ -9,7 +9,7 @@ import '../config/api_config.dart';
 class ApiService {
   final String baseUrl = ApiConfig.baseUrl;
   final Duration timeout = ApiConfig.timeout;
-  
+
   Map<String, String> get _headers => ApiConfig.headers;
 
   Future<bool> testConnection() async {
@@ -18,17 +18,17 @@ class ApiService {
         print('🔍 Test de connexion au serveur...');
         print('🌐 URL: $baseUrl');
       }
-      
+
       final response = await http.get(
         Uri.parse('$baseUrl/ping'),
         headers: _headers,
       ).timeout(const Duration(seconds: 5));
-      
+
       if (foundation.kDebugMode) {
         print('📡 Status: ${response.statusCode}');
         print('📡 Body: ${response.body}');
       }
-      
+
       return response.statusCode == 200;
     } catch (e) {
       if (foundation.kDebugMode) {
@@ -38,7 +38,6 @@ class ApiService {
     }
   }
 
-  // Méthode utilitaire pour créer un client HTTP avec timeout
   http.Client _createClient() {
     return http.Client();
   }
@@ -53,7 +52,7 @@ class ApiService {
 
     try {
       final data = json.decode(response.body);
-      
+
       switch (response.statusCode) {
         case 200:
         case 201:
@@ -78,7 +77,7 @@ class ApiService {
         print('🌐 Tentative de connexion à : $baseUrl');
         print('🔧 Headers: $_headers');
       }
-      
+
       return await request().timeout(timeout);
     } on SocketException catch (e) {
       if (foundation.kDebugMode) {
@@ -98,28 +97,6 @@ class ApiService {
         print('❌ Erreur inattendue: $e');
       }
       throw Exception('Erreur de connexion: $e');
-    }
-  }
-
-  Future<dynamic> _handleRequest(Future<http.Response> Function() request) async {
-    try {
-      if (foundation.kDebugMode) {
-        print('🌐 Tentative de connexion à : $baseUrl');
-      }
-      
-      final response = await request();
-      
-      if (foundation.kDebugMode) {
-        print('📡 Status Code: ${response.statusCode}');
-        print('📡 Response: ${response.body}');
-      }
-
-      return json.decode(response.body);
-    } catch (e) {
-      if (foundation.kDebugMode) {
-        print('❌ Erreur de connexion: $e');
-      }
-      throw Exception('Erreur de connexion au serveur: $e');
     }
   }
 
@@ -143,10 +120,6 @@ class ApiService {
       ));
 
       final data = await _handleResponse(response);
-      
-      if (foundation.kDebugMode) {
-        print('📡 Réponse reçue: $data');
-      }
 
       List<dynamic> chauffeursData;
       if (data is List) {
@@ -162,10 +135,6 @@ class ApiService {
           .map((json) => Chauffeur.fromJson(json))
           .toList();
 
-      if (foundation.kDebugMode) {
-        print('✅ Chauffeurs trouvés: ${chauffeurs.length}');
-      }
-
       return chauffeurs;
     } catch (e) {
       if (foundation.kDebugMode) {
@@ -176,20 +145,18 @@ class ApiService {
   }
 
   // 📤 Envoie une demande à un chauffeur spécifique
-  Future<void> sendRequestToChauffeur(int chauffeurId, double clientLat, double clientLon) async {
+  Future<void> sendRequestToChauffeur(int clientId, int chauffeurId) async {
     try {
       if (foundation.kDebugMode) {
-        print('📍 Envoi requête chauffeur: $chauffeurId');
-        print('📍 Position: $clientLat, $clientLon');
+        print('📍 Envoi requête chauffeur: $chauffeurId pour client: $clientId');
       }
 
       final response = await _executeRequest(() => http.post(
-        Uri.parse('$baseUrl/drivers/request'),
+        Uri.parse('$baseUrl/demandes'), // ✅ Correct maintenant
         headers: _headers,
         body: jsonEncode({
-          'client_latitude': clientLat,
-          'client_longitude': clientLon,
-          'driver_id': chauffeurId,
+          'client_id': clientId,
+          'chauffeur_id': chauffeurId,
         }),
       ));
 

@@ -29,10 +29,12 @@ class _LoginScreenState extends State<LoginScreen> {
       if (user != null) {
         try {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('token', user.token);
-          await prefs.setInt('user_id', user.id);
-          await prefs.setString('user_name', user.name);
-          await prefs.setString('user_email', user.email);
+          
+          // Stockage des données utilisateur avec la notation Map
+          await prefs.setString('token', user['token'] ?? '');
+          await prefs.setInt('user_id', user['user']['id'] ?? 0);
+          await prefs.setString('user_name', user['user']['name'] ?? '');
+          await prefs.setString('user_email', user['user']['email'] ?? '');
         } catch (e) {
           debugPrint("⚠ Erreur lors de la sauvegarde des préférences : $e");
         }

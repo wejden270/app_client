@@ -5,6 +5,7 @@ import '../config/api_config.dart';
 import '../models/chauffeur_model.dart';
 import '../helpers/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/demande_service.dart';
 
 class ChauffeurDetailScreen extends StatefulWidget {
   final int chauffeurId;
@@ -29,6 +30,7 @@ class ChauffeurDetailScreen extends StatefulWidget {
 }
 
 class _ChauffeurDetailScreenState extends State<ChauffeurDetailScreen> {
+  final DemandeService _demandeService = DemandeService();
   Map<String, dynamic>? chauffeurDetails;
   bool _isLoading = false;
 
@@ -38,10 +40,6 @@ class _ChauffeurDetailScreenState extends State<ChauffeurDetailScreen> {
     });
 
     try {
-      debugPrint('📤 Envoi demande - Chauffeur ID: ${widget.chauffeurId}');
-      debugPrint('📍 Position client: ${widget.clientLat}, ${widget.clientLng}');
-      
-      // Lecture de l'ID client depuis SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final clientId = prefs.getInt('user_id');
 
@@ -49,38 +47,21 @@ class _ChauffeurDetailScreenState extends State<ChauffeurDetailScreen> {
         throw Exception('Client non connecté');
       }
 
-      final response = await http.post(
-        Uri.parse('http://192.168.1.110:8000/api/demandes'),
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'client_id': clientId,             // Ajout de l'ID client
-          'chauffeur_id': widget.chauffeurId,
-          'depart_latitude': widget.clientLat,
-          'depart_longitude': widget.clientLng,
-          'destination_latitude': widget.chauffeurLat,  // Position du chauffeur comme destination
-          'destination_longitude': widget.chauffeurLng,
-          'status': 'en_attente'
-        }),
+      await _demandeService.envoyerDemande(
+        clientId,
+        widget.chauffeurId,
+        widget.clientLat,
+        widget.clientLng,
       );
 
-      debugPrint('📡 Status code: ${response.statusCode}');
-      debugPrint('📡 Response body: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Demande envoyée avec succès !'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.pop(context);
-        }
-      } else {
-        throw Exception('Erreur serveur: ${response.statusCode} - ${response.body}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Demande envoyée avec succès !'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
       }
     } catch (e) {
       debugPrint('❌ Erreur: $e');
@@ -94,9 +75,7 @@ class _ChauffeurDetailScreenState extends State<ChauffeurDetailScreen> {
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }

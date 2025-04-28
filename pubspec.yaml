@@ -45,6 +45,7 @@ dependencies:
   permission_handler: ^11.4.0 # Assure-toi de mettre la dernière version disponible
 
   another_flushbar: ^1.12.30
+  intl: ^0.18.0
 
 dev_dependencies:
   flutter_test:

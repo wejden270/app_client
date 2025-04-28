@@ -165,6 +165,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       TextButton(
+                        onPressed: () async {
+                          if (emailController.text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("⚠ Veuillez saisir votre email")),
+                            );
+                            return;
+                          }
+                          // TODO: Implémenter la logique de récupération de mot de passe
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("✉ Un email de réinitialisation a été envoyé")),
+                          );
+                        },
+                        child: const Text("Mot de passe oublié ?"),
+                      ),
+                      TextButton(
                         onPressed: () {
                           Navigator.push(
                             context,

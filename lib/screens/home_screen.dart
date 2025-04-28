@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'chauffeur_detail_screen.dart'; // Import du nouvel écran
+import 'mes_demandes_screen.dart'; // Ajout de cet import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -103,6 +104,19 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text("Position du client"),
         backgroundColor: Colors.blueAccent,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.list_alt),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MesDemandesScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -111,8 +125,8 @@ class _HomeScreenState extends State<HomeScreen> {
             isLoading
                 ? const CircularProgressIndicator()
                 : latitude == null || longitude == null
-                ? const Text("Impossible d'obtenir la position.")
-                : Text("Latitude: $latitude, Longitude: $longitude"),
+                    ? const Text("Impossible d'obtenir la position.")
+                    : Text("Latitude: $latitude, Longitude: $longitude"),
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(

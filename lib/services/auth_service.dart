@@ -2,12 +2,17 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../helpers/api_service.dart';
+import '../config/api_config.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 // Import conditionnel pour gérer dart:io (incompatible avec le Web)
 /*import 'platform_stub.dart'
 if (dart.library.io) 'platform_io.dart';*/
 
 class AuthService {
+  final ApiService apiService = ApiService();
+
   /// 🔥 Retourne l'URL de l'API selon la plateforme
 String getApiUrl() {
   return "http://192.168.1.110:8000/api/auth"; // IP de ton PC pour téléphones réels
@@ -16,11 +21,14 @@ String getApiUrl() {
   /// 🚀 Inscription
   Future<Map<String, dynamic>?> registerUser(String name, String email, String password) async {
     try {
+      // Récupérer le FCM token
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+
       final String apiUrl = getApiUrl();
       final uri = Uri.parse('$apiUrl/register');
 
       debugPrint("🔗 URL appelée : $uri");
-      debugPrint("📤 Données envoyées : name=$name, email=$email, password=$password");
+      debugPrint("📱 FCM Token: $fcmToken");
 
       final response = await http.post(
         uri,
@@ -33,6 +41,7 @@ String getApiUrl() {
           'email': email.trim(),
           'password': password,
           'password_confirmation': password,
+          'fcm_token': fcmToken,
         }),
       );
 
@@ -55,17 +64,15 @@ String getApiUrl() {
   /// 🚀 Connexion
   Future<Map<String, dynamic>?> loginUser(String email, String password) async {
     try {
-      final String apiUrl = getApiUrl();
-      final uri = Uri.parse('$apiUrl/login');
-
-      debugPrint("🔗 URL appelée : $uri");
-      debugPrint("📤 Données envoyées : email=$email, password=$password");
+      if (kDebugMode) {
+        print('🔐 Tentative de connexion pour: $email');
+      }
 
       final response = await http.post(
-        uri,
+        Uri.parse('${getApiUrl()}/login'),
         headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: jsonEncode({
           'email': email.trim(),
@@ -73,19 +80,72 @@ String getApiUrl() {
         }),
       );
 
-      debugPrint("📡 Status Code : ${response.statusCode}");
-      debugPrint("📡 Response Body : ${response.body}");
+      if (kDebugMode) {
+        print('📡 Status Code: ${response.statusCode}');
+        print('📡 Response Body: ${response.body}');
+      }
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return data;
+        
+        // Vérifie si l'authentification a réussi
+        if (data['status'] == 'success' || data['user'] != null) {
+          // Mise à jour du FCM token une fois connecté
+          try {
+            final fcmToken = await FirebaseMessaging.instance.getToken();
+            if (fcmToken != null) {
+              await http.post(
+                Uri.parse('http://192.168.1.110:8000/api/client/${data['user']['id']}/fcm-token'),
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                },
+                body: jsonEncode({'fcm_token': fcmToken}),
+              );
+            }
+          } catch (e) {
+            print('⚠️ Erreur lors de la mise à jour du FCM token: $e');
+            // On continue même si la mise à jour du FCM token échoue
+          }
+          
+          return {
+            'user': data['user'],
+            'token': data['access_token'],
+          };
+        }
+        throw Exception('Réponse invalide du serveur');
+      } else if (response.statusCode == 401) {
+        throw Exception('Identifiants invalides');
       } else {
-        debugPrint("⚠ Échec de la connexion : ${response.body}");
-        return null;
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Erreur de connexion');
       }
     } catch (e) {
-      debugPrint("❌ Erreur de connexion : $e");
-      return null;
+      if (kDebugMode) {
+        print('❌ Erreur détaillée: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Mise à jour du FCM token
+  Future<void> _updateFcmToken(int userId, String fcmToken) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://192.168.1.110:8000/api/client/$userId/fcm-token'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'fcm_token': fcmToken}),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erreur lors de la mise à jour du FCM token');
+      }
+    } catch (e) {
+      print('❌ Erreur mise à jour FCM token: $e');
+      rethrow;
     }
   }
 

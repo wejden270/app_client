@@ -1,16 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static const String _serverIP = '192.168.1.110';  // Votre IP WiFi
-  static const int _serverPort = 8000;
-
-  // ✅ Utilisation correcte avec un getter
-  static String get baseUrl => 'http://$_serverIP:$_serverPort/api';
-  
+  static const String baseUrl = 'http://192.168.1.110:8000/api';
   static const Duration timeout = Duration(seconds: 30);
-  
-  static final Map<String, String> headers = {
+
+  static Map<String, String> get headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   };
+
+  // Routes API
+  static const String loginRoute = '/auth/login';
+  static const String registerRoute = '/auth/register';
 }

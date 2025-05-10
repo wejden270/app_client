@@ -3,10 +3,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:another_flushbar/flushbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../helpers/api_service.dart';
 
 class FirebaseMessagingService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final GlobalKey<NavigatorState>? navigatorKey;
+  final ApiService _apiService = ApiService();
 
   FirebaseMessagingService({this.navigatorKey});
 
@@ -22,8 +25,8 @@ class FirebaseMessagingService {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         // Get FCM token
         String? token = await _messaging.getToken();
-        if (kDebugMode && token != null) {
-          print('FCM Token: $token');
+        if (token != null) {
+          await _saveFcmToken(token);
         }
 
         // Handle messages when app is terminated
@@ -46,14 +49,32 @@ class FirebaseMessagingService {
 
         // Handle token refresh
         _messaging.onTokenRefresh.listen((String token) {
-          if (kDebugMode) {
-            print('New token: $token');
-          }
+          _saveFcmToken(token);
         });
       }
     } catch (e) {
       if (kDebugMode) {
         print('Firebase Messaging initialization error: $e');
+      }
+    }
+  }
+
+  Future<void> _saveFcmToken(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('fcm_token', token);
+      
+      final userId = prefs.getInt('user_id');
+      if (userId != null) {
+        await _apiService.updateFcmToken(userId, token);
+      }
+      
+      if (kDebugMode) {
+        print('FCM Token sauvegardé: $token');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erreur sauvegarde FCM token: $e');
       }
     }
   }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:clients_app/services/auth_service.dart'; // ✅ bon
+import 'package:clients_app/services/auth_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
 
@@ -19,51 +22,56 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
+  Future<void> requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+  }
+
   Future<void> loginUser() async {
     try {
+      if (kDebugMode) {
+        print('🔄 Début de la tentative de connexion');
+      }
+
+      await requestLocationPermission();
       final user = await _authService.loginUser(
         emailController.text.trim(),
         passwordController.text.trim(),
       );
 
-      if (user != null) {
-        try {
-          final prefs = await SharedPreferences.getInstance();
-          
-          // Stockage des données utilisateur avec la notation Map
-          await prefs.setString('token', user['token'] ?? '');
-          await prefs.setInt('user_id', user['user']['id'] ?? 0);
-          await prefs.setString('user_name', user['user']['name'] ?? '');
-          await prefs.setString('user_email', user['user']['email'] ?? '');
-        } catch (e) {
-          debugPrint("⚠ Erreur lors de la sauvegarde des préférences : $e");
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("✅ Connexion réussie !")),
-          );
-
-          Future.microtask(() {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()),
-            );
-          });
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("⚠ Erreur de connexion, vérifiez vos identifiants.")),
-          );
-        }
+      if (user == null) {
+        throw Exception("La réponse du serveur est vide");
       }
+
+      if (!mounted) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', user['token'] ?? '');
+      await prefs.setInt('user_id', user['user']['id'] ?? 0);
+      await prefs.setString('user_name', user['user']['name'] ?? '');
+      await prefs.setString('user_email', user['user']['email'] ?? '');
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ Erreur de connexion : ${e.toString()}")),
-        );
+      if (kDebugMode) {
+        print('❌ Erreur de connexion détaillée: $e');
       }
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceAll('Exception:', '❌'),
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -163,21 +171,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           "Se connecter",
                           style: TextStyle(fontSize: 18),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          if (emailController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("⚠ Veuillez saisir votre email")),
-                            );
-                            return;
-                          }
-                          // TODO: Implémenter la logique de récupération de mot de passe
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("✉ Un email de réinitialisation a été envoyé")),
-                          );
-                        },
-                        child: const Text("Mot de passe oublié ?"),
                       ),
                       TextButton(
                         onPressed: () {

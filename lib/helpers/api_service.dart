@@ -168,4 +168,27 @@ class ApiService {
       rethrow;
     }
   }
+
+  Future<void> updateFcmToken(int userId, String fcmToken) async {
+    try {
+      if (foundation.kDebugMode) {
+        print('📱 Mise à jour du FCM token pour userId: $userId');
+      }
+
+      final response = await _executeRequest(() => http.post(
+        Uri.parse('$baseUrl/user/$userId/fcm-token'),
+        headers: _headers,
+        body: jsonEncode({
+          'fcm_token': fcmToken,
+        }),
+      ));
+
+      await _handleResponse(response);
+    } catch (e) {
+      if (foundation.kDebugMode) {
+        print('❌ Erreur mise à jour FCM token: $e');
+      }
+      rethrow;
+    }
+  }
 }

@@ -12,6 +12,7 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -23,6 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
   void dispose() {
     nameController.dispose();
     emailController.dispose();
+    phoneController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
@@ -92,6 +94,20 @@ class _SignupScreenState extends State<SignupScreen> {
                   if (value == null || value.isEmpty) return 'L\'email est requis';
                   if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$").hasMatch(value)) {
                     return 'Veuillez entrer un email valide';
+                  }
+                  return null;
+                },
+              ),
+              _buildTextField(
+                controller: phoneController,
+                label: 'Numéro de téléphone',
+                icon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Le numéro de téléphone est requis';
+                  if (!RegExp(r"^[0-9]{10}$").hasMatch(value)) {
+                    return 'Veuillez entrer un numéro de téléphone valide (10 chiffres)';
                   }
                   return null;
                 },

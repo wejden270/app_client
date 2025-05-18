@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'chauffeur_detail_screen.dart'; // Import du nouvel écran
 import 'mes_demandes_screen.dart'; // Ajout de cet import
+import 'chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -264,9 +265,23 @@ class MapScreen extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                   child: ListTile(
                     leading: const Icon(Icons.directions_car, color: Colors.red),
-                    title: Text("Chauffeur ${index + 1}"),
+                    title: Text(driver['name'] ?? 'Chauffeur sans nom'),
                     subtitle: Text(
-                      "Latitude: ${driver['latitude']}, Longitude: ${driver['longitude']}",
+                      "Tel: ${driver['phone'] ?? 'Non renseigné'}",
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.message),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatScreen(
+                              chauffeurId: int.parse(driver['id'].toString()),
+                              chauffeurNom: driver['name'] ?? 'Sans nom',
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ));
